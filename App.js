@@ -7,7 +7,7 @@
  */
 
 import React, { Component } from 'react';
-import { Platform, StyleSheet, Text, View, ImageBackground, TouchableOpacity, TextInput, StatusBar } from 'react-native';
+import { Platform, StyleSheet, Text, View, ImageBackground, TouchableOpacity, TextInput, StatusBar, Linking } from 'react-native';
 import { Dimensions } from 'react-native';
 import { BoxShadow } from 'react-native-shadow';
 import LinearGradient from 'react-native-linear-gradient';
@@ -62,6 +62,57 @@ class App extends Component {
     }
   }
 
+  componentDidMount() { // B
+    if (Platform.OS === 'android') {
+      Linking.getInitialURL().then(url => {
+        this.navigate(url);
+      });
+    } else {
+        Linking.addEventListener('url', this.handleOpenURL);
+      }
+    }
+    
+    componentWillUnmount() { // C
+      Linking.removeEventListener('url', this.handleOpenURL);
+    }
+    handleOpenURL = (event) => { // D
+      this.navigate(event.url);
+    }
+    navigate = (url) => { 
+      console.log(url)
+    
+      const parts = url.split('?')
+      const part1 = parts[0];
+      const part2 = parts[1];
+      const part3 = part2.split('&');
+
+      console.log(part3[0])
+      console.log("Token")
+      console.log(part3[1])
+      console.log("AppToken")
+      console.log(part3[2])
+
+      const isLoggedIn = part3[0] === 'login=true' ? true : false
+      console.log(isLoggedIn)
+
+    
+      if (isLoggedIn === true) {
+        this.props.navigator.push({
+              screen: 'HomePage',
+              navigatorStyle: {
+                navBarBackgroundColor: 'rgba(232,236,244,1)',
+                navBarNoBorder: true,
+                navBarButtonColor: "black",
+                drawUnderStatusBar: true,
+                navBarHidden: true,
+              },
+            });
+      }
+      else {
+        alert("Oh oh.. Something went wrong. Please try again!!")
+      }
+    }
+
   render() {
     return (
       <View style={styles.container}>
@@ -74,7 +125,7 @@ class App extends Component {
               <Text style={styles.headerText}> MyEvents</Text>
             </View>
 
-            <View style={{ width: deviceWidth - 100, height: deviceHeight / 4, marginLeft: 10 }}>
+            {/* <View style={{ width: deviceWidth - 100, height: deviceHeight / 4, marginLeft: 10 }}>
               <Text style={{ fontFamily: 'OpenSans', fontWeight: '500', marginTop: 10, color: 'gray' }}>Username</Text>
               <TextInput style={this.state.userNameValidated === true ? styles.textFieldValidated : styles.textFieldNotValidated}
                 onChangeText={(text) => this.validateUsername(text)}
@@ -84,10 +135,10 @@ class App extends Component {
                 secureTextEntry={true}
                 onChangeText={(text) => this.validatePswd(text)}
               />
-              {/* <TouchableOpacity style={{ height: 30, width: 110, marginRight: 1, marginTop: 5, alignSelf: 'flex-end' }}>
+              <TouchableOpacity style={{ height: 30, width: 110, marginRight: 1, marginTop: 5, alignSelf: 'flex-end' }}>
                 <Text style={{ fontFamily: 'OpenSans', textAlign: 'right', color: 'gray' }}>Forgot password</Text>
-              </TouchableOpacity> */}
-            </View>
+              </TouchableOpacity>
+            </View> */}
 
             <View style={{ width: deviceWidth - 100, height: deviceHeight / 4, marginLeft: 10 }}>
               <TouchableOpacity
@@ -95,21 +146,22 @@ class App extends Component {
                 pointerEvents={this.state.userNameValidated === true && this.state.pswdValidated === true ? 'auto' : 'none'}
                 underlayColor='#fff'
                 onPress={() => {
-                  if (this.state.userNameValidated === true && this.state.pswdValidated === true) {
-                    this.props.navigator.push({
-                      screen: 'HomePage',
-                      navigatorStyle: {
-                        navBarBackgroundColor: 'rgba(232,236,244,1)',
-                        navBarNoBorder: true,
-                        navBarButtonColor: "black",
-                        drawUnderStatusBar: true,
-                        navBarHidden: true,
-                      },
-                    });
-                  }
-                  else {
-                    alert("Please enter a valid username and password.")
-                  }
+                  // if (this.state.userNameValidated === true && this.state.pswdValidated === true) {
+                  //   this.props.navigator.push({
+                  //     screen: 'HomePage',
+                  //     navigatorStyle: {
+                  //       navBarBackgroundColor: 'rgba(232,236,244,1)',
+                  //       navBarNoBorder: true,
+                  //       navBarButtonColor: "black",
+                  //       drawUnderStatusBar: true,
+                  //       navBarHidden: true,
+                  //     },
+                  //   });
+                  // }
+                  // else {
+                  //   alert("Please enter a valid username and password.")
+                  // }
+                  Linking.openURL('https://life-at-maxis-admin.herokuapp.com/lam-admin/users/authorize?clientType=mobile')
                 }}>
                 <Text style={styles.loginText}>LOGIN</Text>
               </TouchableOpacity>
@@ -133,6 +185,8 @@ const styles = StyleSheet.create({
   loginView: {
     width: deviceWidth - 80,
     height: deviceHeight - 250,
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: 'rgba(255,255,255,1)',
     marginTop: -40,
     marginLeft: 40,
